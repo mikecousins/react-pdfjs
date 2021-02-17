@@ -71,7 +71,7 @@ type HookProps = {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   file: string;
   onDocumentLoadSuccess?: (document: pdfjs.PDFDocumentProxy) => void;
-  onDocumentLoadFail?: () => void;
+  onDocumentLoadFail?: (err: pdfjs.InvalidPDFException) => void;
   onPageLoadSuccess?: (page: pdfjs.PDFPageProxy) => void;
   onPageLoadFail?: () => void;
   onPageRenderSuccess?: (page: pdfjs.PDFPageProxy) => void;
@@ -109,13 +109,27 @@ export const usePdf = ({
 }: HookProps): HookReturnValues => {
   const [pdfDocument, setPdfDocument] = useState<pdfjs.PDFDocumentProxy>();
   const [pdfPage, setPdfPage] = useState<pdfjs.PDFPageProxy>();
+  const mounted = useRef<boolean>(true);
   const renderTask = useRef<pdfjs.PDFRenderTask | null>(null);
+  const documentLoadingTask = useRef<pdfjs.PDFDocumentLoadingTask | null>(null);
   const onDocumentLoadSuccessRef = useRef(onDocumentLoadSuccess);
   const onDocumentLoadFailRef = useRef(onDocumentLoadFail);
   const onPageLoadSuccessRef = useRef(onPageLoadSuccess);
   const onPageLoadFailRef = useRef(onPageLoadFail);
   const onPageRenderSuccessRef = useRef(onPageRenderSuccess);
   const onPageRenderFailRef = useRef(onPageRenderFail);
+
+  useEffect(
+    () => () => {
+      // we must call `PDFDocumentLoadingTask.destroy` method to clean-up after
+      // a document, since otherwise some resources may not be removed as intended
+      if (documentLoadingTask.current) {
+        mounted.current = false;
+        documentLoadingTask.current.destroy();
+      }
+    },
+    []
+  );
 
   // assign callbacks to refs to avoid redrawing
   useEffect(() => {
@@ -152,17 +166,22 @@ export const usePdf = ({
       config.cMapUrl = cMapUrl;
       config.cMapPacked = cMapPacked;
     }
-    pdfjs.getDocument(config).promise.then(
-      loadedPdfDocument => {
-        setPdfDocument(loadedPdfDocument);
+    documentLoadingTask.current = pdfjs.getDocument(config);
+    documentLoadingTask.current.promise.then(
+      (loadedPdfDocument: pdfjs.PDFDocumentProxy) => {
+        // sometimes component could be unmounted at time when this promise will be
+        // resolved
+        if (mounted.current) {
+          setPdfDocument(loadedPdfDocument);
 
-        if (isFunction(onDocumentLoadSuccessRef.current)) {
-          onDocumentLoadSuccessRef.current(loadedPdfDocument);
+          if (isFunction(onDocumentLoadSuccessRef.current)) {
+            onDocumentLoadSuccessRef.current(loadedPdfDocument);
+          }
         }
       },
-      () => {
+      (err: pdfjs.InvalidPDFException) => {
         if (isFunction(onDocumentLoadFailRef.current)) {
-          onDocumentLoadFailRef.current();
+          onDocumentLoadFailRef.current(err);
         }
       }
     );
@@ -211,7 +230,7 @@ export const usePdf = ({
             onPageRenderSuccessRef.current(page);
           }
         },
-        err => {
+        (err: pdfjs.RenderingCancelledException) => {
           renderTask.current = null;
 
           // @ts-ignore typings are outdated
@@ -226,7 +245,7 @@ export const usePdf = ({
 
     if (pdfDocument) {
       pdfDocument.getPage(page).then(
-        loadedPdfPage => {
+        (loadedPdfPage: any) => {
           setPdfPage(loadedPdfPage);
 
           if (isFunction(onPageLoadSuccessRef.current)) {
