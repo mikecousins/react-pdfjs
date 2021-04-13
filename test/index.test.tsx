@@ -1,15 +1,15 @@
 import React from 'react';
-import pdfjs from '@bundled-es-modules/pdfjs-dist';
 import { render, wait, waitForDomChange } from '@testing-library/react';
+import { DocumentInitParameters } from 'pdfjs-dist/types/display/api';
 
 import Pdf from '../src';
 
-jest.mock('@bundled-es-modules/pdfjs-dist', () => ({
+jest.mock('pdfjs-dist', () => ({
   version: '1.0',
   GlobalWorkerOptions: {
     workerSrc: '',
   },
-  getDocument: jest.fn((config: pdfjs.PDFSource) => ({
+  getDocument: jest.fn((config: DocumentInitParameters) => ({
     promise: config.url?.includes('fail_document')
       ? Promise.reject()
       : Promise.resolve({

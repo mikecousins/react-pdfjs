@@ -753,11 +753,6 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@bundled-es-modules/pdfjs-dist@^2.2.228-alpha1":
-  version "2.2.228-alpha1"
-  resolved "https://registry.yarnpkg.com/@bundled-es-modules/pdfjs-dist/-/pdfjs-dist-2.2.228-alpha1.tgz#7b86d623973c3ba0bd688f9650b10f79ab8e69d2"
-  integrity sha512-fXr94eQWCFcG31nGBP7nI5+Oa/BJWCwItB4wGVkXuS1qhFyo486y0jZ+XSUJYpo0A15FJ5c/fmewLWDq9IorAA==
-
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
@@ -4621,6 +4616,11 @@ path-type@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
+
+pdfjs-dist@^2.7.570:
+  version "2.7.570"
+  resolved "https://registry.yarnpkg.com/pdfjs-dist/-/pdfjs-dist-2.7.570.tgz#7233241a2437ac22387656099b6e549d032f0b35"
+  integrity sha512-/ZkA1FwkEOyDaq11JhMLazdwQAA0F9uwrP7h/1L9Akt9KWh1G5/tkzS+bPuUELq2s2GDFnaT+kooN/aSjT7DXQ==
 
 performance-now@^2.1.0:
   version "2.1.0"

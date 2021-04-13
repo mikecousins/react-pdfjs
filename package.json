@@ -53,6 +53,6 @@
     "typescript": "3.7.5"
   },
   "dependencies": {
-    "@bundled-es-modules/pdfjs-dist": "^2.2.228-alpha1"
+    "pdfjs-dist": "^2.7.570"
   }
 }

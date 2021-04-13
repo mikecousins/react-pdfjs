@@ -1,9 +1,18 @@
-import pdfjs from '@bundled-es-modules/pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist';
+
+import {
+  PDFDocumentProxy,
+  PDFPageProxy,
+  DocumentInitParameters,
+} from 'pdfjs-dist/types/display/api';
+
 import React, { useState, useEffect, useRef, useImperativeHandle } from 'react';
 
 function isFunction(value: any): value is Function {
   return typeof value === 'function';
 }
+
+type PDFRenderTask = ReturnType<PDFPageProxy['render']>;
 
 type ComponentRenderProps = HookReturnValues & {
   canvas: React.ReactElement;
@@ -70,11 +79,11 @@ const Pdf = React.forwardRef<HTMLCanvasElement | null, ComponentProps>(
 type HookProps = {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   file: string;
-  onDocumentLoadSuccess?: (document: pdfjs.PDFDocumentProxy) => void;
+  onDocumentLoadSuccess?: (document: PDFDocumentProxy) => void;
   onDocumentLoadFail?: () => void;
-  onPageLoadSuccess?: (page: pdfjs.PDFPageProxy) => void;
+  onPageLoadSuccess?: (page: PDFPageProxy) => void;
   onPageLoadFail?: () => void;
-  onPageRenderSuccess?: (page: pdfjs.PDFPageProxy) => void;
+  onPageRenderSuccess?: (page: PDFPageProxy) => void;
   onPageRenderFail?: () => void;
   scale?: number;
   rotate?: number;
@@ -86,8 +95,8 @@ type HookProps = {
 };
 
 type HookReturnValues = {
-  pdfDocument: pdfjs.PDFDocumentProxy | undefined;
-  pdfPage: pdfjs.PDFPageProxy | undefined;
+  pdfDocument: PDFDocumentProxy | undefined;
+  pdfPage: PDFPageProxy | undefined;
 };
 
 export const usePdf = ({
@@ -107,9 +116,9 @@ export const usePdf = ({
   workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`,
   withCredentials = false,
 }: HookProps): HookReturnValues => {
-  const [pdfDocument, setPdfDocument] = useState<pdfjs.PDFDocumentProxy>();
-  const [pdfPage, setPdfPage] = useState<pdfjs.PDFPageProxy>();
-  const renderTask = useRef<pdfjs.PDFRenderTask | null>(null);
+  const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy>();
+  const [pdfPage, setPdfPage] = useState<PDFPageProxy>();
+  const renderTask = useRef<PDFRenderTask | null>(null);
   const onDocumentLoadSuccessRef = useRef(onDocumentLoadSuccess);
   const onDocumentLoadFailRef = useRef(onDocumentLoadFail);
   const onPageLoadSuccessRef = useRef(onPageLoadSuccess);
@@ -147,7 +156,7 @@ export const usePdf = ({
   }, [workerSrc]);
 
   useEffect(() => {
-    const config: pdfjs.PDFSource = { url: file, withCredentials };
+    const config: DocumentInitParameters = { url: file, withCredentials };
     if (cMapUrl) {
       config.cMapUrl = cMapUrl;
       config.cMapPacked = cMapPacked;
@@ -170,7 +179,7 @@ export const usePdf = ({
 
   useEffect(() => {
     // draw a page of the pdf
-    const drawPDF = (page: pdfjs.PDFPageProxy) => {
+    const drawPDF = (page: PDFPageProxy) => {
       // Because this page's rotation option overwrites pdf default rotation value,
       // calculating page rotation option value from pdf default and this component prop rotate.
       const rotation = rotate === 0 ? page.rotate : page.rotate + rotate;
@@ -211,11 +220,10 @@ export const usePdf = ({
             onPageRenderSuccessRef.current(page);
           }
         },
-        err => {
+        (reason: Error) => {
           renderTask.current = null;
 
-          // @ts-ignore typings are outdated
-          if (err && err.name === 'RenderingCancelledException') {
+          if (reason && reason.name === 'RenderingCancelledException') {
             drawPDF(page);
           } else if (isFunction(onPageRenderFailRef.current)) {
             onPageRenderFailRef.current();
